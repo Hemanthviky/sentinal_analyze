@@ -27,7 +27,7 @@ const UploadPage = () => {
 
     setUploading(true);
     try {
-      await axios.post('http://localhost:5000/upload', formData, {
+      await axios.post('http://localhost:5000/api/start-mask-detection', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -73,7 +73,7 @@ const UploadPage = () => {
               color: '#1a1a1a',
             }}
           >
-            Upload Your Video
+            Mask Detection Analysis
           </Typography>
         </motion.div>
 
@@ -115,6 +115,9 @@ const UploadPage = () => {
                 Drag and drop your video here or click to browse
               </Typography>
               <Typography variant="body2" sx={{ color: '#999', mt: 1 }}>
+                Upload a video to detect people wearing or not wearing masks
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#999', mt: 1 }}>
                 Supported formats: MP4, AVI, MOV (Max size: 500MB)
               </Typography>
             </Box>
@@ -152,7 +155,7 @@ const UploadPage = () => {
               onClick={handleUpload}
               disabled={!file || uploading}
             >
-              {uploading ? 'Uploading...' : 'Start Analysis'}
+              {uploading ? 'Uploading...' : 'Start Mask Detection'}
             </Button>
           </Box>
         </motion.div>

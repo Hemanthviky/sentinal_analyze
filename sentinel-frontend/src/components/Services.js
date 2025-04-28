@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Container, Typography, Grid, Card, Button } from '@mui/material';
 import { motion } from 'framer-motion';
-import { FaUserFriends, FaCamera, FaCar } from 'react-icons/fa';
+import { FaUserFriends, FaMask, FaCar } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const services = [
@@ -13,18 +13,18 @@ const services = [
     route: '/people-detection'
   },
   {
-    icon: <FaCamera size={40} />,
-    title: 'Face Detection',
-    description: 'State-of-the-art facial detection technology that can identify and track faces in real-time video streams with high accuracy.',
+    icon: <FaMask size={40} />,
+    title: 'Mask Detection',
+    description: 'Advanced AI-powered mask detection system that can identify people wearing or not wearing masks in video streams for safety compliance monitoring.',
     color: '#2196F3',
-    route: '/face-detection'
+    route: '/mask-detection'
   },
   {
     icon: <FaCar size={40} />,
     title: 'Number Plate Detection',
     description: 'Automated number plate recognition system that can detect and read vehicle license plates in various conditions.',
     color: '#9C27B0',
-    route: '/plate-detection'
+    route: '/number-plate-detection'
   },
 ];
 

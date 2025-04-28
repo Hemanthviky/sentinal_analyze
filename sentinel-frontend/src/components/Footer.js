@@ -124,7 +124,7 @@ const Footer = () => {
             </Typography>
             {[
               'Person Detection',
-              'Face Detection',
+              'Mask Detection',
               'Number Plate Detection',
               'Video Analytics',
             ].map((service) => (

@@ -7,6 +7,7 @@ from counter import Counter, count_data
 from ultralytics import YOLO
 import threading
 from number_plate_detection import NumberPlateDetector, get_plate_data
+from mask_detection import MaskDetector, get_mask_data
 
 app = Flask(__name__)
 CORS(app)
@@ -26,6 +27,10 @@ processing_thread = None
 # Global plate detector instance
 plate_detector_instance = None
 plate_processing_thread = None
+
+# Global mask detector instance
+mask_detector_instance = None
+mask_processing_thread = None
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -168,6 +173,61 @@ def stop_plate_detection():
         return jsonify({'success': True, 'message': 'License plate detection stopped'})
     
     return jsonify({'success': False, 'message': 'No active license plate detection to stop'})
+
+@app.route('/api/start-mask-detection', methods=['POST'])
+def start_mask_detection():
+    global mask_detector_instance, mask_processing_thread
+    
+    if 'video' not in request.files:
+        return jsonify({'error': 'No video file provided'}), 400
+    
+    # Stop any existing mask detector
+    if mask_detector_instance is not None and mask_processing_thread is not None:
+        mask_detector_instance.stop_processing()
+        mask_processing_thread.join(timeout=3)
+    
+    file = request.files['video']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        try:
+            # Create mask detector instance
+            mask_detector_instance = MaskDetector(filepath, model_path='yolov8n.pt')
+            
+            # Start processing in background
+            mask_processing_thread = mask_detector_instance.start_processing()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Mask detection started'
+            })
+        except Exception as e:
+            # Clean up the uploaded file in case of error
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            return jsonify({'error': str(e)}), 500
+    
+    return jsonify({'error': 'Invalid file type'}), 400
+
+@app.route('/api/mask-data', methods=['GET'])
+def get_mask_detection_data():
+    """Return current mask detection data as JSON"""
+    return jsonify(get_mask_data())
+
+@app.route('/api/stop-mask-detection', methods=['POST'])
+def stop_mask_detection():
+    global mask_detector_instance
+    
+    if mask_detector_instance is not None:
+        mask_detector_instance.stop_processing()
+        return jsonify({'success': True, 'message': 'Mask detection stopped'})
+    
+    return jsonify({'success': False, 'message': 'No active mask detection to stop'})
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
