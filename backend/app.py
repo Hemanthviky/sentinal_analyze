@@ -114,7 +114,42 @@ def start_counting():
 @app.route('/api/count-data', methods=['GET'])
 def get_count_data():
     """Return current count data as JSON"""
-    return jsonify(count_data)
+    try:
+        # Create a copy of count_data to modify
+        data = dict(count_data)
+        
+        # Handle frame_base64 data safely
+        frame_base64 = None
+        if data.get('frame_base64') is not None:
+            try:
+                # Use base64 encoding for better browser compatibility
+                import base64
+                frame_base64 = base64.b64encode(data['frame_base64']).decode('utf-8')
+            except (AttributeError, UnicodeDecodeError) as e:
+                print(f"Error encoding frame_base64: {e}")
+                # If encoding fails, try the old method
+                try:
+                    frame_base64 = data['frame_base64'].decode('latin1')
+                except Exception:
+                    # If all fails, just return the raw bytes
+                    if isinstance(data['frame_base64'], bytes):
+                        frame_base64 = data['frame_base64']
+        
+        # Update the frame_base64 in the data copy
+        data['frame_base64'] = frame_base64
+        
+        return jsonify(data)
+    except Exception as e:
+        print(f"Error in get_count_data: {e}")
+        # Return a safe default response
+        return jsonify({
+            'entering': 0,
+            'exiting': 0,
+            'last_updated': time.time(),
+            'processing_complete': False,
+            'frame_base64': None,
+            'error': str(e)
+        })
 
 @app.route('/api/start-plate-detection', methods=['POST'])
 def start_plate_detection():

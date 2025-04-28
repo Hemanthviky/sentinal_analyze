@@ -31,6 +31,13 @@ const PeopleDetection = () => {
   const [countData, setCountData] = useState({ entering: 0, exiting: 0 });
   const [isRealTimeCounting, setIsRealTimeCounting] = useState(false);
   const countingIntervalRef = React.useRef(null);
+  
+  // Request notification permission on component mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   // Simulated progress for visualization purposes
   useEffect(() => {
@@ -68,7 +75,7 @@ const PeopleDetection = () => {
   // Fetch real-time count data
   useEffect(() => {
     if (isRealTimeCounting) {
-      // Start polling for count data
+      // Start polling for count data more frequently for smoother video
       countingIntervalRef.current = setInterval(async () => {
         try {
           const response = await fetch('http://localhost:5000/api/count-data');
@@ -81,6 +88,12 @@ const PeopleDetection = () => {
             exiting: data.exiting,
             total: data.entering + data.exiting
           });
+          
+          // Check if we have a valid frame
+          if (data.frame_base64) {
+            // Update the preview with the processed frame
+            setPreview(`data:image/jpeg;base64,${data.frame_base64}`);
+          }
           
           // Check if processing is complete
           if (data.processing_complete) {
@@ -102,11 +115,19 @@ const PeopleDetection = () => {
               clearInterval(countingIntervalRef.current);
               countingIntervalRef.current = null;
             }
+            
+            // Show a notification that processing is complete
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('People Detection Complete', {
+                body: 'Your video has been processed. View the results now.',
+                icon: '/favicon.ico'
+              });
+            }
           }
         } catch (error) {
           console.error('Error fetching count data:', error);
         }
-      }, 1000); // Poll every second
+      }, 200); // Poll more frequently for smoother video updates
     } else {
       // Clear interval if not counting
       if (countingIntervalRef.current) {
@@ -695,7 +716,7 @@ const PeopleDetection = () => {
                 >
                   <Box sx={{ mt: 4 }}>
                     <Typography variant="h6" sx={{ mb: 2, color: theme.dark, fontWeight: 'bold' }}>
-                      Video Preview
+                      {isRealTimeCounting ? 'Live Video Feed' : 'Video Preview'}
                     </Typography>
                     <Box
                       sx={{
@@ -705,11 +726,23 @@ const PeopleDetection = () => {
                         boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
                       }}
                     >
-                      <video
-                        src={preview}
-                        controls
-                        style={{ width: '100%', borderRadius: '8px' }}
-                      />
+                      {isRealTimeCounting ? (
+                        <img
+                          src={preview}
+                          alt="Live video feed"
+                          style={{ 
+                            width: '100%', 
+                            borderRadius: '8px',
+                            objectFit: 'contain'
+                          }}
+                        />
+                      ) : (
+                        <video
+                          src={preview}
+                          controls
+                          style={{ width: '100%', borderRadius: '8px' }}
+                        />
+                      )}
                     </Box>
                   </Box>
                 </motion.div>

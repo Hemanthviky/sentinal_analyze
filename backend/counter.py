@@ -16,7 +16,8 @@ count_data = {
     'entering': 0,
     'exiting': 0,
     'last_updated': time.time(),
-    'processing_complete': False
+    'processing_complete': False,
+    'frame_base64': None
 }
 
 def RGB(event, x, y, flags, param):
@@ -136,6 +137,15 @@ class Counter:
                 self.predictModel(frame)
                 self.drawTowPolylines(frame)
                 
+                # Convert the frame to base64 for web display with better quality
+                encode_param = [int(cv.IMWRITE_JPEG_QUALITY), 90]
+                _, buffer = cv.imencode('.jpg', frame, encode_param)
+                jpg_as_text = buffer.tobytes()
+                
+                # Update global count data with the frame
+                with self.lock:
+                    count_data['frame_base64'] = jpg_as_text
+                
                 if cv.waitKey(1) & 0xFF ==ord("q"):
                     break
                     
@@ -147,6 +157,7 @@ class Counter:
             # Ensure processing_complete is set to True when finished
             with self.lock:
                 count_data['processing_complete'] = True
+                count_data['frame_base64'] = None
             
             # Clean up the video file
             try:
